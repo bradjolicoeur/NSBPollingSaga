@@ -1,0 +1,1 @@
+<?xml version="1.0"?><ProcessPollingRequest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://tempuri.net/Contracts.Commands"><RequestId>971276fd-db65-442c-8963-dbf418ef9cc8</RequestId><RequestTime>2019-04-03T23:48:44.8505Z</RequestTime></ProcessPollingRequest>
