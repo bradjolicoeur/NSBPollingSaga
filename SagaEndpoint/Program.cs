@@ -7,6 +7,8 @@
     using System;
     using System.Threading.Tasks;
     using Infrastructure.Configuration;
+    using System.Net.Http;
+    using SagaEndpoint.Proxy;
 
     class Program
     {
@@ -66,6 +68,9 @@
 
             // Add access to generic IConfigurationRoot
             serviceCollection.AddSingleton<IConfigurationRoot>(configuration);
+            serviceCollection.AddSingleton<HttpClient>();
+
+            serviceCollection.AddSingleton<IApiProxy, ApiProxy>();
         }
 
     }

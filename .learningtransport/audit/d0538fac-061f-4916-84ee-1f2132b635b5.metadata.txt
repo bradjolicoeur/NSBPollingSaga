@@ -1,0 +1,23 @@
+{
+  "NServiceBus.MessageId": "e9bb0dad-ff60-45e5-977a-aa250129cc15",
+  "NServiceBus.MessageIntent": "Publish",
+  "NServiceBus.RelatedTo": "a6aee6e9-f810-49a5-ad02-aa250128b825",
+  "NServiceBus.ConversationId": "4df929d7-0f7e-4cd3-956d-aa25012891e7",
+  "NServiceBus.CorrelationId": "910359ec-e631-411a-9882-aa25012891e5",
+  "NServiceBus.OriginatingMachine": "AFTERMAN-JOLICO",
+  "NServiceBus.OriginatingEndpoint": "PollingRequestSaga",
+  "$.diagnostics.originating.hostid": "d24fde9b945d31fd522dcc9e13c13137",
+  "NServiceBus.OriginatingSagaId": "180c2b6d-192a-3dbd-5078-9e637351d6e2",
+  "NServiceBus.OriginatingSagaType": "SagaEndpoint.PollingRequestSaga, SagaEndpoint, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.ReplyToAddress": "PollingRequestSaga",
+  "NServiceBus.ContentType": "text\/xml",
+  "NServiceBus.EnclosedMessageTypes": "Contracts.Events.ICompletedPollingRequest, Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.Version": "7.1.7",
+  "NServiceBus.TimeSent": "2019-04-04 18:04:14:787000 Z",
+  "NServiceBus.ProcessingStarted": "2019-04-04 18:04:14:818000 Z",
+  "NServiceBus.ProcessingEnded": "2019-04-04 18:04:14:823500 Z",
+  "$.diagnostics.hostid": "3358b28bbdae289a1cd202980d022cc0",
+  "$.diagnostics.hostdisplayname": "AFTERMAN-JOLICO",
+  "NServiceBus.ProcessingMachine": "AFTERMAN-JOLICO",
+  "NServiceBus.ProcessingEndpoint": "Producer"
+}

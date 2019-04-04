@@ -6,7 +6,9 @@ namespace SagaEndpoint.Models
 {
     public class ApiResponse
     {
-        public string Value { get; set; }
+        public bool Completed { get; set; }
+        public string Message { get; set; }
+        public bool Success { get; set; }
         public string ClaimCheckToken { get; set; }
     }
 }
