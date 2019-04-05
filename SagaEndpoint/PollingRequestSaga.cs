@@ -35,9 +35,15 @@ namespace SagaEndpoint
             Data.RequestTime = message.RequestTime;
             Data.TimeoutCount = 0;
 
-            //TODO: make request to API and collect claim check token
+            //make request to API and collect claim check token
             var result = await _proxy.MakeInitialRequest(Data.ApiURL, Data.RequestId);
             Data.ClaimCheckToken = result.ClaimCheckToken;
+
+            //todo: make sure this gracefully handles situation where remote endpoint is down
+            //in theory nsb retries will handle it automatically, but that will not send a message back to the originating caller
+            //depending on the use case, it may be appropriate to send message back to the originator to let them know that
+            //the request is running into difficulty and give the originator the option to cancel the request or just wait for 
+            //a later response when the process is done.
 
             await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(1));
 
@@ -53,7 +59,7 @@ namespace SagaEndpoint
             {
                 //todo: this should communicate back to the caller that the saga could not be completed
                 //need to reorganize this handler so it can communicate status better
-                MarkAsComplete();//we can't continue since we don't have a claim token
+                MarkAsComplete();//we can't continue since we don't have a claim token, something unexpected happend
                 return;
             }
                 

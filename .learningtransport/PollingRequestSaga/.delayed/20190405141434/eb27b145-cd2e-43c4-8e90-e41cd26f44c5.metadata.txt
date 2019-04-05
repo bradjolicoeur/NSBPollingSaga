@@ -1,0 +1,20 @@
+{
+  "NServiceBus.SagaId": "5fb0d18e-6cdb-3af2-3f64-460f93045530",
+  "NServiceBus.IsSagaTimeoutMessage": "True",
+  "NServiceBus.SagaType": "SagaEndpoint.PollingRequestSaga, SagaEndpoint, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.MessageId": "5210b49a-4026-47ce-835d-aa2600eaa9ec",
+  "NServiceBus.MessageIntent": "Send",
+  "NServiceBus.RelatedTo": "e780e5bb-ab9b-4f12-b73f-aa2600ea9cd0",
+  "NServiceBus.ConversationId": "ff6f8f3b-1dba-47eb-afdb-aa2600ea8d80",
+  "NServiceBus.CorrelationId": "4f195f6a-4ced-4eea-9aa0-aa2600ea8d80",
+  "NServiceBus.OriginatingMachine": "AFTERMAN-JOLICO",
+  "NServiceBus.OriginatingEndpoint": "PollingRequestSaga",
+  "$.diagnostics.originating.hostid": "d24fde9b945d31fd522dcc9e13c13137",
+  "NServiceBus.OriginatingSagaId": "5fb0d18e-6cdb-3af2-3f64-460f93045530",
+  "NServiceBus.OriginatingSagaType": "SagaEndpoint.PollingRequestSaga, SagaEndpoint, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.ReplyToAddress": "PollingRequestSaga",
+  "NServiceBus.ContentType": "text\/xml",
+  "NServiceBus.EnclosedMessageTypes": "SagaEndpoint.Timeout.PollingRequestTimeout, SagaEndpoint, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.Version": "7.1.7",
+  "NServiceBus.TimeSent": "2019-04-05 14:14:23:075200 Z"
+}

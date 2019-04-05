@@ -1,0 +1,20 @@
+{
+  "NServiceBus.MessageId": "5d4db54a-5282-4e63-9d5b-aa2600e8cf82",
+  "NServiceBus.MessageIntent": "Send",
+  "NServiceBus.ConversationId": "98dda596-083c-41b4-b1f4-aa2600e8cf82",
+  "NServiceBus.CorrelationId": "5d4db54a-5282-4e63-9d5b-aa2600e8cf82",
+  "NServiceBus.OriginatingMachine": "AFTERMAN-JOLICO",
+  "NServiceBus.OriginatingEndpoint": "Producer",
+  "$.diagnostics.originating.hostid": "3358b28bbdae289a1cd202980d022cc0",
+  "NServiceBus.ReplyToAddress": "Producer",
+  "NServiceBus.ContentType": "text\/xml",
+  "NServiceBus.EnclosedMessageTypes": "Contracts.Commands.ProcessPollingRequest, Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+  "NServiceBus.Version": "7.1.7",
+  "NServiceBus.TimeSent": "2019-04-05 14:07:38:243200 Z",
+  "NServiceBus.ProcessingStarted": "2019-04-05 14:07:38:268200 Z",
+  "NServiceBus.ProcessingEnded": "2019-04-05 14:07:38:300200 Z",
+  "$.diagnostics.hostid": "d24fde9b945d31fd522dcc9e13c13137",
+  "$.diagnostics.hostdisplayname": "AFTERMAN-JOLICO",
+  "NServiceBus.ProcessingMachine": "AFTERMAN-JOLICO",
+  "NServiceBus.ProcessingEndpoint": "PollingRequestSaga"
+}
