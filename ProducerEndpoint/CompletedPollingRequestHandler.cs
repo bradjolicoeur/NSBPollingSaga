@@ -11,9 +11,10 @@ namespace ProducerEndpoint
 
         public Task Handle(ICompletedPollingRequest message, IMessageHandlerContext context)
         {
-            log.Info($"Handle Completed Request for {message.RequestId}");
+            log.Info($"Handle Completed Request for {message.RequestId} " 
+                        + message.Message + " attempts:" + message.NumberOfAttempts.ToString());
 
-            //Suggestion; This handler might be where you do a webhook post back to the caller
+            //Suggestion; This handler might be where you do a webhook post back to the orininal caller
 
             return Task.CompletedTask;
         }

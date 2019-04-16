@@ -38,7 +38,9 @@ namespace ProducerEndpoint
             {
                 RequestId = guid.ToString(),
                 RequestTime = DateTime.UtcNow,
-                ApiURL = "https://localhost:44381/api/values"
+                ApiURL = "https://localhost:44381/api/values",
+                PollIntervalSeconds = 20,
+                MaxPollAttempts = 5
             };
 
             return request;

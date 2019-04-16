@@ -16,6 +16,9 @@ namespace SagaEndpoint
         public string ApiURL { get; set; }
         public string ClaimCheckToken { get; set; }
 
-        public int TimeoutCount { get; set; }
+        public int PollsCompleted { get; set; }
+
+        public int PollIntervalSeconds { get; set; }
+        public int MaxPollAttempts { get; set; }
     }
 }

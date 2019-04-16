@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Contracts.Commands;
 using Contracts.Events;
+using Newtonsoft.Json;
 using NServiceBus;
 using NServiceBus.Logging;
 using SagaEndpoint.Proxy;
@@ -33,7 +34,9 @@ namespace SagaEndpoint
 
             Data.ApiURL = message.ApiURL;
             Data.RequestTime = message.RequestTime;
-            Data.TimeoutCount = 0;
+            Data.PollsCompleted = 0;
+            Data.MaxPollAttempts = message.MaxPollAttempts < 3 ? 3 : message.MaxPollAttempts; //override if less than three
+            Data.PollIntervalSeconds = message.PollIntervalSeconds < 2 ? 2 : message.PollIntervalSeconds; //override if less than 2 seconds
 
             //make request to API and collect claim check token
             var result = await _proxy.MakeInitialRequest(Data.ApiURL, Data.RequestId);
@@ -45,42 +48,61 @@ namespace SagaEndpoint
             //the request is running into difficulty and give the originator the option to cancel the request or just wait for 
             //a later response when the process is done.
 
-            await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(1));
+            //schedule request for results to occur in the future
+            await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(Data.PollIntervalSeconds));
 
         }
 
         public async Task Timeout(PollingRequestTimeout state, IMessageHandlerContext context)
         {
-            log.Info($"Handle Timeout for {Data.RequestId}, Count {Data.TimeoutCount.ToString()}");
+            log.Info($"Handle Polling Request for {Data.RequestId}, Count {Data.PollsCompleted.ToString()}");
 
-            Data.TimeoutCount++;
+            Data.PollsCompleted++;
 
             if (Data.ClaimCheckToken == null)
             {
-                //todo: this should communicate back to the caller that the saga could not be completed
-                //need to reorganize this handler so it can communicate status better
-                MarkAsComplete();//we can't continue since we don't have a claim token, something unexpected happend
+                //publish failed results of polling request
+                await PublishCompletedMessage(context, false,
+                    "Claim Check Token from target was null and request could not complete");
+
+                MarkAsComplete(); //we can't continue since we don't have a claim token, something unexpected happend
                 return;
             }
                 
 
-            //check to see if done
+            //make callback to see if response is ready
             var result = await _proxy.MakeCallbackRequest(Data.ApiURL, Data.ClaimCheckToken);
 
-            if (Data.TimeoutCount > 3 || result.Completed || Data.ClaimCheckToken == null)
+            if (Data.PollsCompleted >= Data.MaxPollAttempts || result.Completed)
             {
                 MarkAsComplete();  //this will delete the saga data from persistance with the assumption it is no longer needed
                 log.Info($"Saga Complete for {Data.RequestId}");
 
-                await context.Publish<ICompletedPollingRequest>(
-                    messageConstructor: m =>
-                    {
-                        m.RequestId = Data.RequestId;
-                        m.RequestTime = Data.RequestTime;
-                    });
+                //publish results of polling request
+                await PublishCompletedMessage(context, result.Completed, 
+                    result.Completed ? "Successful": "Maximum number of callbacks attempted",
+                    result.Completed ? JsonConvert.SerializeObject(result) : null);
+            }
+            else
+            {
+                //schedule timeout to make another attempt in the future
+                await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(Data.PollIntervalSeconds));
             }
 
-            await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(10));
+        }
+
+        private async Task PublishCompletedMessage(IMessageHandlerContext context, bool successful, string message, string response = null)
+        {
+            await context.Publish<ICompletedPollingRequest>(
+                messageConstructor: m =>
+                {
+                    m.RequestId = Data.RequestId;
+                    m.RequestTime = Data.RequestTime;
+                    m.Successful = successful;
+                    m.Message = message;
+                    m.Response = response;
+                    m.NumberOfAttempts = Data.PollsCompleted;
+                });
         }
     }
 }

@@ -53,7 +53,7 @@
                 {
                     schedule
                         .ToRunNow()
-                        .AndEvery(5).Seconds();
+                        .AndEvery(20).Seconds();
                 });
 
             //Support Graceful Shut Down of NSB Endpoint in PCF
