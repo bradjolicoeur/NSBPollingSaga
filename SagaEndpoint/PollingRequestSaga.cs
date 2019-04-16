@@ -5,6 +5,7 @@ using Contracts.Events;
 using Newtonsoft.Json;
 using NServiceBus;
 using NServiceBus.Logging;
+using SagaEndpoint.Commands;
 using SagaEndpoint.Proxy;
 using SagaEndpoint.Timeout;
 
@@ -12,7 +13,8 @@ namespace SagaEndpoint
 {
     public class PollingRequestSaga : Saga<PollingRequestSagaData>,
                           IAmStartedByMessages<ProcessPollingRequest>,
-                          IHandleTimeouts<PollingRequestTimeout>
+                          IHandleTimeouts<PollingRequestTimeout>,
+                          IHandleMessages<ProcessAPIRequest>
     {
         private static ILog log = LogManager.GetLogger<PollingRequestSaga>();
         private readonly IApiProxy _proxy;
@@ -26,6 +28,9 @@ namespace SagaEndpoint
         {
             mapper.ConfigureMapping<ProcessPollingRequest>(message => message.RequestId)
              .ToSaga(sagaData => sagaData.RequestId);
+
+            mapper.ConfigureMapping<ProcessAPIRequest>(message => message.RequestId)
+             .ToSaga(sagaData => sagaData.RequestId);
         }
 
         public async Task Handle(ProcessPollingRequest message, IMessageHandlerContext context)
@@ -38,26 +43,31 @@ namespace SagaEndpoint
             Data.MaxPollAttempts = message.MaxPollAttempts < 3 ? 3 : message.MaxPollAttempts; //override if less than three
             Data.PollIntervalSeconds = message.PollIntervalSeconds < 2 ? 2 : message.PollIntervalSeconds; //override if less than 2 seconds
 
+            //send message to make initial call instead of handling directly, 
+            //this will enable sending message to caller if the external api is down
+            await context.SendLocal<ProcessAPIRequest>(m =>{ m.RequestId = Data.RequestId; });
+
+            //suggestion: set overall request timeout? or publish message that the request is being processed?
+
+        }
+
+        public async Task Handle(ProcessAPIRequest message, IMessageHandlerContext context)
+        {
+            log.Debug("Make initial request to API for " + Data.RequestId);
+
+            //NOTE: nsb retries will automatically handle short outages of external api, do not catch errors here
+
             //make request to API and collect claim check token
             var result = await _proxy.MakeInitialRequest(Data.ApiURL, Data.RequestId);
             Data.ClaimCheckToken = result.ClaimCheckToken;
 
-            //todo: make sure this gracefully handles situation where remote endpoint is down
-            //in theory nsb retries will handle it automatically, but that will not send a message back to the originating caller
-            //depending on the use case, it may be appropriate to send message back to the originator to let them know that
-            //the request is running into difficulty and give the originator the option to cancel the request or just wait for 
-            //a later response when the process is done.
-
             //schedule request for results to occur in the future
             await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(Data.PollIntervalSeconds));
-
         }
 
         public async Task Timeout(PollingRequestTimeout state, IMessageHandlerContext context)
         {
             log.Info($"Handle Polling Request for {Data.RequestId}, Count {Data.PollsCompleted.ToString()}");
-
-            Data.PollsCompleted++;
 
             if (Data.ClaimCheckToken == null)
             {
@@ -68,7 +78,6 @@ namespace SagaEndpoint
                 MarkAsComplete(); //we can't continue since we don't have a claim token, something unexpected happend
                 return;
             }
-                
 
             //make callback to see if response is ready
             var result = await _proxy.MakeCallbackRequest(Data.ApiURL, Data.ClaimCheckToken);
@@ -85,6 +94,8 @@ namespace SagaEndpoint
             }
             else
             {
+                Data.PollsCompleted++;
+
                 //schedule timeout to make another attempt in the future
                 await RequestTimeout<PollingRequestTimeout>(context, TimeSpan.FromSeconds(Data.PollIntervalSeconds));
             }
@@ -104,5 +115,7 @@ namespace SagaEndpoint
                     m.NumberOfAttempts = Data.PollsCompleted;
                 });
         }
+
+        
     }
 }
