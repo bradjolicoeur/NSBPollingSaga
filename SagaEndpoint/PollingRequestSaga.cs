@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using Contracts.Commands;
 using Contracts.Events;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NServiceBus;
-using NServiceBus.Logging;
 using SagaEndpoint.Commands;
 using SagaEndpoint.Proxy;
 using SagaEndpoint.Timeout;
@@ -16,12 +16,13 @@ namespace SagaEndpoint
                           IHandleTimeouts<PollingRequestTimeout>,
                           IHandleMessages<ProcessAPIRequest>
     {
-        private static ILog log = LogManager.GetLogger<PollingRequestSaga>();
+        private readonly ILogger _logger;
         private readonly IApiProxy _proxy;
 
-        public PollingRequestSaga(IApiProxy proxy)
+        public PollingRequestSaga(ILogger<PollingRequestSaga> logger, IApiProxy proxy)
         {
             _proxy = proxy;
+            _logger = logger;
         }
 
         protected override void ConfigureHowToFindSaga(SagaPropertyMapper<PollingRequestSagaData> mapper)
@@ -35,7 +36,7 @@ namespace SagaEndpoint
 
         public async Task Handle(ProcessPollingRequest message, IMessageHandlerContext context)
         {
-            log.Info($"Initialize Saga for {message.RequestId}");
+            _logger.LogInformation($"Initialize Saga for {message.RequestId}");
 
             Data.ApiURL = message.ApiURL;
             Data.RequestTime = message.RequestTime;
@@ -53,7 +54,7 @@ namespace SagaEndpoint
 
         public async Task Handle(ProcessAPIRequest message, IMessageHandlerContext context)
         {
-            log.Debug("Make initial request to API for " + Data.RequestId);
+            _logger.LogDebug("Make initial request to API for " + Data.RequestId);
 
             //NOTE: nsb retries will automatically handle short outages of external api, do not catch errors here
 
@@ -67,7 +68,7 @@ namespace SagaEndpoint
 
         public async Task Timeout(PollingRequestTimeout state, IMessageHandlerContext context)
         {
-            log.Info($"Handle Polling Request for {Data.RequestId}, Count {Data.PollsCompleted.ToString()}");
+            _logger.LogInformation($"Handle Polling Request for {Data.RequestId}, Count {Data.PollsCompleted.ToString()}");
 
             if (Data.ClaimCheckToken == null)
             {
@@ -85,7 +86,7 @@ namespace SagaEndpoint
             if (Data.PollsCompleted >= Data.MaxPollAttempts || result.Completed)
             {
                 MarkAsComplete();  //this will delete the saga data from persistance with the assumption it is no longer needed
-                log.Info($"Saga Complete for {Data.RequestId}");
+                _logger.LogInformation($"Saga Complete for {Data.RequestId}");
 
                 //publish results of polling request
                 await PublishCompletedMessage(context, result.Completed, 

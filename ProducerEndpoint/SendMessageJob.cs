@@ -1,7 +1,7 @@
 ﻿using Contracts.Commands;
 using FluentScheduler;
 using NServiceBus;
-using NServiceBus.Logging;
+using Microsoft.Extensions.Logging;
 using NServiceBus.Routing;
 using System;
 using System.Collections.Generic;
@@ -9,21 +9,21 @@ using System.Text;
 
 namespace ProducerEndpoint
 {
-    public class SendMessageJob : IJob
+    public class SendMessageJob : IJob, ISendMessageJob
     {
-        static ILog log = LogManager.GetLogger<SendMessageJob>();
+        private readonly ILogger _logger;
 
-        IEndpointInstance Endpoint;
+        public IEndpointInstance Endpoint { get; set; }
 
-        public SendMessageJob(IEndpointInstance endpoint)
+        public SendMessageJob(ILogger<SendMessageJob> logger)
         {
-            Endpoint = endpoint;
+            _logger = logger;
         }
 
         public void Execute()
         {
             var guid = Guid.NewGuid();
-            log.Info($"Sending Process Request for: {guid:N}");
+            _logger.LogInformation($"Sending Process Request for: {guid:N}");
             var message = GenerateMessage(guid);
 
             //Send a message to a specific queue; use NSB routing for production ready code instead of sending direct to queue name

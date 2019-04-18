@@ -2,6 +2,8 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Logging;
     using NServiceBus;
     using NServiceBus.Logging;
     using System;
@@ -9,69 +11,56 @@
     using Infrastructure.Configuration;
     using System.Net.Http;
     using SagaEndpoint.Proxy;
+    using System.IO;
 
     class Program
     {
-        private static ILog log;
-
-        public static IConfigurationRoot configuration;
-
-        private static IEndpointInstance EndpointInstance { get; set; }
-
         public const string EndpointName = "PollingRequestSaga";
 
         static async Task Main()
         {
-            // Create service collection
-            ServiceCollection serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
 
             //Set console title
             Console.Title = EndpointName;
 
-            //Configure logging
-            LogManager.Use<DefaultFactory>()
-                .Level(LogLevel.Info);
-            log = LogManager.GetLogger<Program>();
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(configHost =>
+                {
+                    configHost.SetBasePath(Directory.GetCurrentDirectory());
+                    configHost.AddJsonFile("hostsettings.json", optional: true);
+                })
+                .ConfigureAppConfiguration((hostContext, configApp) =>
+                {
+                    configApp.AddJsonFile("appsettings.json", optional: true);
+                    configApp.AddJsonFile(
+                        $"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json",
+                        optional: true);
+                })
+                .ConfigureLogging((hostContext, configLogging) =>
+                {
+                    configLogging.AddConsole();
+                    configLogging.AddDebug();
+                })
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddSingleton<HttpClient>();
 
-            //Configure NSB Endpoint
-            EndpointConfiguration endpointConfiguration = EndpointConfigurations.ConfigureNSB(serviceCollection, EndpointName);
+                    services.AddSingleton<IApiProxy, ApiProxy>();
 
-            //only enable this in dev/debug scenarios.  It produces a significant amount of data that will need to be processed by service control
-            //endpointConfiguration.AuditSagaStateChanges(serviceControlQueue: "particular.servicecontrol");
+                    //Configure NSB Endpoint
+                    services.AddSingleton<EndpointConfiguration>(EndpointConfigurations.ConfigureNSB(services, EndpointName));
 
-            //Start NSB Endpoint
-            EndpointInstance = await Endpoint.Start(endpointConfiguration);
+                    services.AddHostedService<HostedService>();
 
-            //Support Graceful Shut Down of NSB Endpoint in PCF
-            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+                })
+                
+                .UseConsoleLifetime()
+                .Build();
 
-            log.Info("ENDPOINT READY");
-
-            Console.Read();
+            await host.RunAsync();
 
         }
 
-        private static void CurrentDomain_ProcessExit(object sender, EventArgs e)
-        {
-            if (EndpointInstance != null)
-            { EndpointInstance.Stop().ConfigureAwait(false); }
-
-            log.Info("Exiting!");
-        }
-
-        private static void ConfigureServices(ServiceCollection serviceCollection)
-        {
-            configuration = new ConfigurationBuilder()
-               .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-               .Build();
-
-            // Add access to generic IConfigurationRoot
-            serviceCollection.AddSingleton<IConfigurationRoot>(configuration);
-            serviceCollection.AddSingleton<HttpClient>();
-
-            serviceCollection.AddSingleton<IApiProxy, ApiProxy>();
-        }
 
     }
 }

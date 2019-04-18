@@ -7,7 +7,7 @@ namespace Infrastructure.Configuration
     public static class EndpointConfigurations
     {
 
-        public static EndpointConfiguration ConfigureNSB(ServiceCollection serviceCollection, string endpointName)
+        public static EndpointConfiguration ConfigureNSB(IServiceCollection serviceCollection, string endpointName)
         {
 
             var endpointConfiguration = new EndpointConfiguration(endpointName);
