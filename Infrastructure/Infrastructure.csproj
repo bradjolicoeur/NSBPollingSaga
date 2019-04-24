@@ -13,4 +13,8 @@
     <PackageReference Include="NServiceBus.SagaAudit" Version="3.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Contracts\Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

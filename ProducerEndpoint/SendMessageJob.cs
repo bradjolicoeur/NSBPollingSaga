@@ -26,8 +26,8 @@ namespace ProducerEndpoint
             _logger.LogInformation($"Sending Process Request for: {guid:N}");
             var message = GenerateMessage(guid);
 
-            //Send a message to a specific queue; use NSB routing for production ready code instead of sending direct to queue name
-            Endpoint.Send("PollingRequestSaga", message)
+            //Note routing section in endpointconfiguration for determining the destination
+            Endpoint.Send(message)
                 .GetAwaiter().GetResult();
         }
 

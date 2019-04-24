@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using NServiceBus;
+using Contracts.Commands;
+using Contracts.Events;
 
 namespace Infrastructure.Configuration
 {
@@ -46,6 +48,10 @@ namespace Infrastructure.Configuration
                 });
 
             var transport = endpointConfiguration.UseTransport<LearningTransport>(); //for production ready, replace with Azure Service Bus, RabbitMQ or MSMQ
+
+            var routing = transport.Routing();
+            routing.RouteToEndpoint(typeof(ProcessPollingRequest), "PollingRequestSaga");
+            //routing.RegisterPublisher(typeof(ICompletedPollingRequest), "PollingRequestSaga");
 
             endpointConfiguration.UsePersistence<LearningPersistence>(); //for production ready, replace with nHibernate or Azure Storage Provider
 
