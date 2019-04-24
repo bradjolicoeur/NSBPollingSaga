@@ -47,14 +47,11 @@
                         })
                         .ConfigureServices((hostContext, services) =>
                         {
-
-                            //Configure NSB Endpoint
-                            services.AddSingleton<EndpointConfiguration>(EndpointConfigurations.ConfigureNSB(services, EndpointName));
-
                             services.AddHostedService<HostedService>();
                             services.AddSingleton<ISendMessageJob, SendMessageJob>();
 
                         })
+                        .ConfigureNSB(EndpointName)
                         .UseConsoleLifetime()
                         .Build();
 

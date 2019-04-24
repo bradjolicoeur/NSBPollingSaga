@@ -47,13 +47,10 @@
 
                     services.AddSingleton<IApiProxy, ApiProxy>();
 
-                    //Configure NSB Endpoint
-                    services.AddSingleton<EndpointConfiguration>(EndpointConfigurations.ConfigureNSB(services, EndpointName));
-
                     services.AddHostedService<HostedService>();
 
                 })
-                
+                .ConfigureNSB(EndpointName)
                 .UseConsoleLifetime()
                 .Build();
 

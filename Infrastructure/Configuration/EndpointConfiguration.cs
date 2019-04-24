@@ -1,22 +1,21 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using NServiceBus;
+﻿using NServiceBus;
 using Contracts.Commands;
-using Contracts.Events;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Configuration
 {
     public static class EndpointConfigurations
     {
 
-        public static EndpointConfiguration ConfigureNSB(IServiceCollection serviceCollection, string endpointName)
+        public static IHostBuilder ConfigureNSB(this IHostBuilder builder, string endpointName)
         {
 
             var endpointConfiguration = new EndpointConfiguration(endpointName);
 
             //Config sections left commented for reference, they will require additional NuGet packages to enable
             //These are plugins that should be enabled for production ready code
-
+            #region Monitoring Config...
             //heartbeat configuration, this is to identify when an endpoint is off or unresponsive
             //endpointConfiguration.SendHeartbeatTo(
             //        serviceControlQueue: "particular.servicecontrol",
@@ -34,6 +33,7 @@ namespace Infrastructure.Configuration
             //performance counter configuration
             //var performanceCounters = endpointConfiguration.EnableWindowsPerformanceCounters();
             //performanceCounters.EnableSLAPerformanceCounters(TimeSpan.FromSeconds(10));
+            #endregion
 
             //configuring audit queue and error queue
             endpointConfiguration.AuditProcessedMessagesTo("audit"); //copy of message after processing will go here for servicecontroller
@@ -60,13 +60,19 @@ namespace Infrastructure.Configuration
 
             endpointConfiguration.EnableInstallers(); //not for production
 
-            endpointConfiguration.UseContainer<ServicesBuilder>(
-            customizations: customizations =>
+            builder.ConfigureServices((context, serviceCollection) =>
             {
-                customizations.ExistingServices(serviceCollection);
+                endpointConfiguration.UseContainer<ServicesBuilder>(
+                   customizations: customizations =>
+                   {
+                       customizations.ExistingServices(serviceCollection);
+                   });
+
+                serviceCollection.AddSingleton<EndpointConfiguration>(endpointConfiguration);
+
             });
 
-            return endpointConfiguration;
+            return builder;
 
         }
     }
