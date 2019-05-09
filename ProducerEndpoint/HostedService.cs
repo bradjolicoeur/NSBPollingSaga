@@ -51,6 +51,8 @@ namespace ProducerEndpoint
 
             if (EndpointInstance != null)
             { await EndpointInstance.Stop().ConfigureAwait(false); }
+
+            JobManager.Stop();
         }
 
         private void ConfigureJobLogger()
